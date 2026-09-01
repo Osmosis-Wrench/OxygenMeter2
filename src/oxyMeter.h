@@ -16,9 +16,9 @@ public:
 	static void Update();
 	static void ApplyLayout(RE::GPtr<RE::IMenu> oxygenMeter);
 	static void ApplyColour(RE::GPtr<RE::IMenu> oxygenMeter);
-	static RE::GPtr<oxygenMenu> GetOxygenMenu();
 
-    static RE::stl::owner<RE::IMenu*> Creator() { return new oxygenMenu(); }
+	static RE::GPtr<oxygenMenu> GetOxygenMenu();
+    static RE::IMenu* Creator() { return new oxygenMenu(); }
 
 	void AdvanceMovie(float a_interval, std::uint32_t a_currentTime) override;
 	RE::UI_MESSAGE_RESULTS ProcessMessage(RE::UIMessage& a_message) override;
@@ -58,7 +58,7 @@ private:
 			std::vsnprintf(buf.data(), buf.size(), fmt.c_str(), args);
 			va_end(args);
 
-			logger::info("{}"sv, buf.data());
+			REX::INFO("{}"sv, buf.data());
 		}
 	};
 };
