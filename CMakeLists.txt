@@ -20,7 +20,6 @@ macro(find_commonlib_path)
 	if (CommonLibName AND NOT ${CommonLibName} STREQUAL "")
 		# Check extern
 		find_path(CommonLibPath
-		include/REL/Relocation.h
 		include/RE/Skyrim.h
 		PATHS extern/${CommonLibName})
 		if (${CommonLibPath} STREQUAL "CommonLibPath-NOTFOUND")

@@ -5,6 +5,12 @@
   "homepage": "",
   "license": "GPL-3.0-or-later",
   "dependencies": [
+    {
+      "name": "commonlib-shared",
+      "features": [
+        "ini"
+      ]
+    },
     "boost-stl-interfaces",
     "rsm-binary-io",
     "clib-util",
