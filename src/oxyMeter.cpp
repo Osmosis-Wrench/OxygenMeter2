@@ -122,7 +122,7 @@ void oxygenMenu::Update()
 			return;
 		}
 		
-		if (fillPct <= flashWhenBelow) {
+		if (*fillPct <= flashWhenBelow) {
 			oxygenMeter->uiMovie->Invoke("main.doFlash", nullptr, nullptr, 0);
 		}
 

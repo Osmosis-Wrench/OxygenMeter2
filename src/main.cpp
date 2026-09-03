@@ -23,7 +23,7 @@ static void SKSEMessageHandler(SKSE::MessagingInterface::Message* message)
 #	ifdef SKYRIM_SUPPORT_AE
 SKSE_PLUGIN_VERSION = []() {
 	SKSE::PluginVersionData v;
-	v.PluginVersion(REL::Version{ Version::MAJOR});
+	v.PluginVersion(REL::Version{ Version::MAJOR, Version::MINOR, Version::PATCH });
 	v.PluginName("Oxygen Meter 2");
 	v.AuthorName("powerofthree and OsmosisWrench");
 	v.UsesAddressLibrary();
@@ -85,6 +85,10 @@ SKSE_PLUGIN_LOAD(const SKSE::LoadInterface* a_skse)
 	Settings::GetSingleton()->Load();
 
 	const auto messaging = SKSE::GetMessagingInterface();
+	if (!messaging) {
+		REX::CRITICAL("Failed to load messaging interface! This error is fatal, plugin will not load.");
+		return false;
+	}
 	messaging->RegisterListener(SKSEMessageHandler);
 
 	return true;

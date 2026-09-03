@@ -9,12 +9,10 @@
 
 #include <ClibUtil/simpleINI.hpp>
 #include <ClibUtil/numeric.hpp>
-#include <spdlog/sinks/basic_file_sink.h>
 #include <xbyak/xbyak.h>
 
 #define DLLEXPORT __declspec(dllexport)
 
-namespace logger = SKSE::log;
 namespace ini = clib_util::ini;
 namespace string = clib_util::string;
 namespace numeric = clib_util::numeric;
