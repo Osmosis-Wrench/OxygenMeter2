@@ -1,8 +1,8 @@
 {
   "name": "oxygen-meter2",
-  "version-string": "1.0.7",
+  "version-string": "1.0.8",
   "description": "Oxygen Meter 2",
-  "homepage": "",
+  "homepage": "https://github.com/Osmosis-Wrench/OxygenMeter2",
   "license": "GPL-3.0-or-later",
   "dependencies": [
     {
