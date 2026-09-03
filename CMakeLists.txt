@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 set(NAME "oxygenMeter2" CACHE STRING "")
-set(VERSION 1.0.7 CACHE STRING "")
+set(VERSION 1.0.8 CACHE STRING "")
 set(AE_VERSION 1)
 
 # ---- Options ----
@@ -20,7 +20,7 @@ macro(find_commonlib_path)
 	if (CommonLibName AND NOT ${CommonLibName} STREQUAL "")
 		# Check extern
 		find_path(CommonLibPath
-		include/REL/Relocation.h
+		include/RE/Skyrim.h
 		PATHS extern/${CommonLibName})
 		if (${CommonLibPath} STREQUAL "CommonLibPath-NOTFOUND")
 			#Check path
@@ -51,15 +51,35 @@ message(
 	"Building ${NAME} ${VERSION} for ${SkyrimVersion} at ${SkyrimPath} with ${CommonLibName} at ${CommonLibPath}."
 )
 
-if(DEFINED VCPKG_ROOT)
+if (DEFINED VCPKG_ROOT)
 	set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 	set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
-else()
+else ()
 	message(
 		WARNING
 		"Variable VCPKG_ROOT is not set. Continuing without vcpkg."
 	)
+endif ()
+
+set(VCPKG_OVERLAY_PORTS "")
+
+if(DEFINED ENV{CommonLibSSEPath})
+	file(TO_CMAKE_PATH "$ENV{CommonLibSSEPath}" CLIB_SOURCE_DIR)
 endif()
+
+if(CLIB_SOURCE_DIR AND EXISTS "${CLIB_SOURCE_DIR}/cmake/ports/commonlib-shared/portfile.cmake")
+	list(APPEND VCPKG_OVERLAY_PORTS "${CLIB_SOURCE_DIR}/cmake/ports")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/CommonLibSSE/cmake/ports/commonlib-shared/portfile.cmake")
+	list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/CommonLibSSE/cmake/ports")
+else()
+	message(FATAL_ERROR "commonlib-shared overlay port not found in any CommonLibSSE checkout")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ports")
+	list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ports")
+endif()
+
+message(STATUS "vcpkg overlay ports: ${VCPKG_OVERLAY_PORTS}")
 
 set(Boost_USE_STATIC_RUNTIME OFF CACHE BOOL "")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "")
@@ -89,7 +109,7 @@ configure_file(
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 	message(
 		FATAL_ERROR
-			"In-source builds not allowed. Please make a new directory(called a build directory) and run CMake from there."
+			"In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
 	)
 endif()
 
@@ -113,9 +133,10 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 set(Boost_USE_STATIC_LIBS ON)
 
 # ---- Dependencies ----
-if(DEFINED CommonLibPath AND NOT ${CommonLibPath} STREQUAL "" AND IS_DIRECTORY ${CommonLibPath})
+
+if (DEFINED CommonLibPath AND NOT ${CommonLibPath} STREQUAL "" AND IS_DIRECTORY ${CommonLibPath})
 	add_subdirectory(${CommonLibPath} ${CommonLibName})
-else()
+else ()
 	message(
 		FATAL_ERROR
 		"Variable ${CommonLibName}Path is not set or in extern/."

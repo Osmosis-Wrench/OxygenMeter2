@@ -14,107 +14,82 @@ static void SKSEMessageHandler(SKSE::MessagingInterface::Message* message)
 	switch (message->type) {
 	case SKSE::MessagingInterface::kDataLoaded:
 		MenuOpenCloseEventHandler::Register();
-		logger::info("Registering oxygen meter menu.");
+		REX::INFO("Registering oxygen meter menu.");
 		oxygenMenu::Register();
 		break;
 	}
 }
 
-#ifdef SKYRIM_AE
-extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() {
+#	ifdef SKYRIM_SUPPORT_AE
+SKSE_PLUGIN_VERSION = []() {
 	SKSE::PluginVersionData v;
-	v.PluginVersion(Version::MAJOR);
+	v.PluginVersion(REL::Version{ Version::MAJOR, Version::MINOR, Version::PATCH });
 	v.PluginName("Oxygen Meter 2");
 	v.AuthorName("powerofthree and OsmosisWrench");
 	v.UsesAddressLibrary();
-	v.UsesUpdatedStructs();
-	v.CompatibleVersions({ SKSE::RUNTIME_LATEST });
+	v.UsesNoStructs();
+	v.CompatibleVersions({ SKSE::RUNTIME_SSE_LATEST });
+
+	if constexpr (SKSE::RUNTIME_SSE_LATEST < Runtime::MIN_ADDRESS_LIBRARY_V5) {
+		v.MinimumRequiredXSEVersion(REL::Version{ 2, 2, 5 });
+	} else {
+		v.MinimumRequiredXSEVersion(REL::Version{ 2, 3, 0 });
+	}
 
 	return v;
 }();
-#else
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a_skse, SKSE::PluginInfo* a_info)
+#	else
+SKSE_PLUGIN_QUERY(const SKSE::QueryInterface* a_skse, SKSE::PluginInfo* a_info)
 {
-	auto path = logger::log_directory();
-	if (!path) {
-		return false;
-	}
-
-	*path /= fmt::format(FMT_STRING("{}.log"), Version::PROJECT);
-	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
-
-	auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
-
-	log->set_level(spdlog::level::info);
-	log->flush_on(spdlog::level::info);
-
-	spdlog::set_default_logger(std::move(log));
-	spdlog::set_pattern("[%H:%M:%S:%e] %v"s);
-
-	logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
-
 	a_info->infoVersion = SKSE::PluginInfo::kVersion;
 	a_info->name = "Oxygen Meter 2";
 	a_info->version = Version::MAJOR;
 
 	if (a_skse->IsEditor()) {
-		logger::critical("Loaded in editor, marking as incompatible"sv);
+		REX::CRITICAL("Loaded in editor, marking as incompatible");
 		return false;
 	}
 
 	const auto ver = a_skse->RuntimeVersion();
-	if (ver < SKSE::RUNTIME_1_5_39) {
-		logger::critical(FMT_STRING("Unsupported runtime version {}"), ver.string());
+	if (ver < SKSE::RUNTIME_SSE_1_5_39) {
+		REX::CRITICAL("Unsupported runtime version {}", ver.string());
 		return false;
 	}
 
 	return true;
 }
+#	endif
+
+SKSE_PLUGIN_LOAD(const SKSE::LoadInterface* a_skse)
+{
+	SKSE::Init(a_skse, { .log = true,
+						   .logName = Version::PROJECT.data() });
+	
+	auto runtimeVersion = a_skse->RuntimeVersion();
+	REX::INFO("Game version : {}", runtimeVersion);
+
+#ifdef SKYRIM_SUPPORT_AE
+	if constexpr (SKSE::RUNTIME_SSE_LATEST < Runtime::MIN_ADDRESS_LIBRARY_V5)
+		{
+		if (runtimeVersion >= Runtime::MIN_ADDRESS_LIBRARY_V5) {
+			REX::FAIL(
+				"You are using a newer version of Skyrim than this version of {0} supports.\n"
+				"Install the correct version of {0} for your game version.\n"
+				"Runtime: {1}\n"
+				"Supported: 1.6.1170 (Steam) / 1.6.1179 (GOG)",
+				Version::PROJECT, runtimeVersion);
+		}
+	}
 #endif
 
-void InitializeLog()
-{
-	auto path = logger::log_directory();
-	if (!path) {
-		stl::report_and_fail("Failed to find standard logging directory"sv);
-	}
-
-	*path /= fmt::format(FMT_STRING("{}.log"), Version::PROJECT);
-	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
-
-	auto log = std::make_shared<spdlog::logger>("global log"s, std::move(sink));
-
-	log->set_level(spdlog::level::info);
-	log->flush_on(spdlog::level::info);
-
-	spdlog::set_default_logger(std::move(log));
-	spdlog::set_pattern("[%l] %v"s);
-
-	logger::info(FMT_STRING("{} v{}"), Version::PROJECT, Version::NAME);
-}
-
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
-{
-	InitializeLog();
-
-	logger::info("Game version : {}", a_skse->RuntimeVersion().string());
-
-	SKSE::Init(a_skse);
-
 	Settings::GetSingleton()->Load();
-	g_messaging = reinterpret_cast<SKSE::MessagingInterface*>(a_skse->QueryInterface(SKSE::LoadInterface::kMessaging));
-	if (!g_messaging) {
-		logger::critical("Failed to load messaging interface! This error is fatal, plugin will not load.");
+
+	const auto messaging = SKSE::GetMessagingInterface();
+	if (!messaging) {
+		REX::CRITICAL("Failed to load messaging interface! This error is fatal, plugin will not load.");
 		return false;
 	}
-
-	auto papyrus = reinterpret_cast<SKSE::PapyrusInterface*>(a_skse->QueryInterface(SKSE::LoadInterface::kPapyrus));
-	if (!papyrus) {
-		logger::critical("Failed to load scripting interface! This error is fatal, plugin will not load.");
-		return false;
-	}
-
-	g_messaging->RegisterListener("SKSE", SKSEMessageHandler);
+	messaging->RegisterListener(SKSEMessageHandler);
 
 	return true;
 }

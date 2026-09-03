@@ -46,12 +46,16 @@ struct detail
 
 	static std::optional<double> get_player_breath_pct()
 	{
-		auto player = RE::PlayerCharacter::GetSingleton();
-		if (player->IsPointDeepUnderWater(player->GetPositionZ(), player->GetParentCell()) < 0.875f || player->IsInvulnerable() || player->GetActorValue(RE::ActorValue::kWaterBreathing) > 0.0001f) {
+		const auto player = RE::PlayerCharacter::GetSingleton();
+
+		if (!player->IsPointSubmergedMoreThan(player->GetPosition(), player->GetParentCell(), 0.875f) || player->IsInvulnerable() || player->GetActorValue(RE::ActorValue::kWaterBreathing) > 0.0001f) {
 			return std::nullopt;
 		}
 
 		float totalBreathTime = detail::get_total_breath_time();
+		if (totalBreathTime <= 0.0f) {
+			return std::nullopt;
+		}
 		float remainingBreath = detail::get_remaining_breath(player->currentProcess);
 
 		return (remainingBreath / totalBreathTime) * 100.0;
@@ -63,7 +67,7 @@ void oxygenMenu::Register()
 	auto ui = RE::UI::GetSingleton();
 	if (ui) {
 		ui->Register(MENU_NAME, Creator);
-		logger::info("Menu Registered.");
+		REX::INFO("Menu Registered.");
 	}
 }
 
@@ -118,7 +122,7 @@ void oxygenMenu::Update()
 			return;
 		}
 		
-		if (fillPct <= flashWhenBelow) {
+		if (*fillPct <= flashWhenBelow) {
 			oxygenMeter->uiMovie->Invoke("main.doFlash", nullptr, nullptr, 0);
 		}
 
@@ -175,7 +179,7 @@ void oxygenMenu::ApplyColour(RE::GPtr<RE::IMenu> oxygenMeter)
 		return;
 
 	const RE::GFxValue bar_colour = Settings::GetSingleton()->widget_colour;
-	const RE::GFxValue flash_colour = Settings::GetSingleton()->widget_colour;
+	const RE::GFxValue flash_colour = Settings::GetSingleton()->widget_flashcolour;
 	RE::GFxValue colourArray[2]{ bar_colour, flash_colour };
 	oxygenMeter->uiMovie->Invoke("main.setBarAndFlashColor", nullptr, colourArray, 2);
 }

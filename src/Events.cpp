@@ -15,14 +15,14 @@ void MenuOpenCloseEventHandler::Register()
 {
 	auto ui = RE::UI::GetSingleton();
 	ui->AddEventSink<RE::MenuOpenCloseEvent>(GetSingleton());
-	logger::info("Registered {}"sv, typeid(RE::MenuOpenCloseEvent).name());
+	REX::INFO("Registered {}"sv, typeid(RE::MenuOpenCloseEvent).name());
 }
 
 RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
 
 	if (a_event)
-		logger::debug("Received RE::MenuOpenCloseEvent for {} with opening {}"sv, a_event->menuName.c_str(), a_event->opening);
+		REX::DEBUG("Received RE::MenuOpenCloseEvent for {} with opening {}"sv, a_event->menuName.c_str(), a_event->opening);
 
 	// On HUD menu open/close - open/close the plugin's HUD menu
 	if (a_event) {
@@ -53,7 +53,7 @@ RE::BSEventNotifyControl MenuOpenCloseEventHandler::ProcessEvent(const RE::MenuO
 		} else {
 			oxygenMenu::want_visible = false;
 		}
-		logger::debug("OxygenMenu::want_Visible = {}", oxygenMenu::want_visible);
+		REX::DEBUG("OxygenMenu::want_Visible = {}", oxygenMenu::want_visible);
 	}
 
 	return RE::BSEventNotifyControl::kContinue;
