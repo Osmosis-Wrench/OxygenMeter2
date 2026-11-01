@@ -47,6 +47,9 @@ struct detail
 	static std::optional<double> get_player_breath_pct()
 	{
 		const auto player = RE::PlayerCharacter::GetSingleton();
+		if (!player || !player->GetParentCell()) {
+			return std::nullopt;
+		}
 
 		if (!player->IsPointSubmergedMoreThan(player->GetPosition(), player->GetParentCell(), 0.875f) || player->IsInvulnerable() || player->GetActorValue(RE::ActorValue::kWaterBreathing) > 0.0001f) {
 			return std::nullopt;
